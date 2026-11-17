@@ -238,10 +238,10 @@ async function handleToolCall(name, args) {
       } catch (e) {
         accountCheck = { verified: false, error: e.message };
       }
-      if (oauthRequired) {
+      if (oauthRequired || !accountCheck?.verified) {
         return { content: [{ type: 'text', text: JSON.stringify({
           status: 'oauth_required',
-          message: 'Google Flow richiede login manuale una tantum:\n'
+          message: 'Google Flow krever manuell innlogging i den dedikerte Hermes Chrome-profilen før generering:\n'
             + '  1. Esegui scripts/start-flow-chrome.ps1 (apre Chrome sul profilo dedicato)\n'
             + '  2. Completa il login Google in quella finestra\n'
             + '  3. Rilancia flow_connect',
@@ -282,11 +282,23 @@ async function handleToolCall(name, args) {
     }
 
     case 'flow_generate_image': {
+      if (args?.auto_confirm === true) {
+        const account = await checkAccount();
+        if (!account.verified || account.account !== (await import('./utils/config.js')).get('expectedAccount')) {
+          throw new Error('FLOW_ACCOUNT_UNVERIFIED: credits not authorized');
+        }
+      }
       const result = await handleGenerateImage(args);
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
 
     case 'flow_generate_video': {
+      if (args?.auto_confirm === true) {
+        const account = await checkAccount();
+        if (!account.verified || account.account !== (await import('./utils/config.js')).get('expectedAccount')) {
+          throw new Error('FLOW_ACCOUNT_UNVERIFIED: credits not authorized');
+        }
+      }
       const result = await handleGenerateVideo(args);
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     }
