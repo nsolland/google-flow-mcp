@@ -83,3 +83,24 @@ and Claude will pick the right tool, handle Chrome startup and fallbacks automat
 ## License
 
 MIT — see [LICENSE](./LICENSE).
+
+## Hermes on Linux (nsolland deployment)
+
+The google_flow MCP server is registered in Hermes with a dedicated Chromium
+profile, using /usr/bin/node and the installed src/index.js. Verify using:
+
+    hermes mcp list
+    hermes mcp test google_flow
+    npm test
+
+Run bash scripts/ensure-flow-chromium.sh from a graphical desktop session,
+then sign in once to Google Flow in the dedicated profile. A headless preflight
+redirects to flow.google.com/about and cannot authenticate.
+
+Credit-spending actions flow_generate_video and flow_generate_image with
+auto_confirm=true fail closed until the expected Google account is positively
+identified. No-password login and existing credits do not permit the agent
+to assume account identity.
+
+This is unofficial browser automation, not a supported Google Flow API.
+Keep Google-account credentials out of Git, MCP arguments and logs.

@@ -9,6 +9,11 @@ const EXPECTED_ACCOUNT = get('expectedAccount', 'your-email@gmail.com');
 export async function verifyAccount() {
   const page = getPage();
   const currentUrl = page.url();
+  // Landing page is not the authenticated Flow editor.
+  if (!EXPECTED_ACCOUNT || !EXPECTED_ACCOUNT.includes('@')
+      || /flow\.google\.com\/about|accounts\.google\.com/i.test(currentUrl)) {
+    return { verified: false, account: null, method: 'login_required' };
+  }
 
   logger.info('Verifying Google account on Flow', { expectedAccount: EXPECTED_ACCOUNT });
 
@@ -66,14 +71,13 @@ export async function verifyAccount() {
       logger.debug('Could not read page internals for account', { error: e.message });
     }
 
-    // If we reached here without detecting wrong account, assume it's correct
-    // (we can't always detect programmatically without Google API)
-    logger.info('Account verification passed (no wrong account detected)', {
-      account: EXPECTED_ACCOUNT,
+    // Explicit verification is required before a credit-spending action.
+    // Absence of evidence is not proof that the right account is signed in.
+    logger.warn('Google account cannot be verified', {
+      expectedAccount: EXPECTED_ACCOUNT,
       currentUrl: currentUrl?.substring(0, 80),
     });
-
-    return { verified: true, account: EXPECTED_ACCOUNT, method: 'assumed' };
+    return { verified: false, account: null, method: 'unverified' };
   } catch (err) {
     if (err instanceof FlowError) throw err;
     throw new FlowError(
